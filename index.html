@@ -259,19 +259,23 @@
         </label>
         <div class="checkbox-container">
           <input type="checkbox" value="${item}" onchange="toggleAmount(this)" />
-          <input type="number" min="1" value="1" />
+          <input type="number" min="1" value="1" onchange="updateAmount(this)" />
         </div>
       `;
-      // Menü item'ine tıklanabilirlik ekleyin
-      container.addEventListener('click', () => {
-        const checkbox = container.querySelector("input[type='checkbox']");
-        checkbox.checked = !checkbox.checked; // Tıklandığında checkbox'ı kontrol et
-        toggleAmount(checkbox); // Seçim miktarını göster
+      // Menü item'ine tıklanabilirlik ekleyin (checkbox dışında)
+      container.addEventListener('click', (event) => {
+        // Eğer tıklanan şey number input değilse, checkbox'ı kontrol et
+        if (event.target.tagName !== 'INPUT') {
+          const checkbox = container.querySelector("input[type='checkbox']");
+          checkbox.checked = !checkbox.checked; // Tıklandığında checkbox'ı kontrol et
+          toggleAmount(checkbox); // Seçim miktarını göster
+        }
       });
       menuDiv.appendChild(container);
     });
   });
 }
+
 
 function toggleAmount(checkbox) {
   const container = checkbox.closest('.menu-item');
