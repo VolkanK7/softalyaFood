@@ -17,7 +17,6 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const App = () => {
-   const db = getDatabase();
    const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
    const [menuMainInput, setMenuMainInput] = useState('');
    const [menuSideInput, setMenuSideInput] = useState('');
@@ -29,19 +28,26 @@ const App = () => {
 
    useEffect(() => {
       if (userName) {
-         const menuRef = ref(db, 'menu');
-         onValue(menuRef, (snapshot) => {
-            const data = snapshot.val() || {};
-            setMenuMain(data.main || []);
-            setMenuSide(data.side || []);
-         });
-
-         const selectionRef = ref(db, 'selections');
-         onValue(selectionRef, (snapshot) => {
-            setSelections(snapshot.val() || {});
-         });
+         loadMenuFromFirebase();
+         loadSelections();
       }
    }, [userName]);
+
+   const loadMenuFromFirebase = () => {
+      const menuRef = ref(db, 'menu');
+      onValue(menuRef, (snapshot) => {
+         const data = snapshot.val() || {};
+         setMenuMain(data.main || []);
+         setMenuSide(data.side || []);
+      });
+   };
+
+   const loadSelections = () => {
+      const selectionRef = ref(db, 'selections');
+      onValue(selectionRef, (snapshot) => {
+         setSelections(snapshot.val() || {});
+      });
+   };
 
    const saveName = () => {
       if (userName.trim()) {
@@ -54,29 +60,6 @@ const App = () => {
       const main = menuMainInput.trim().split('\n').filter(Boolean);
       const side = menuSideInput.trim().split('\n').filter(Boolean);
       set(ref(db, 'menu'), { main, side });
-   };
-
-   const toggleAmount = (index, type) => {
-      const el = document.getElementById(`${type}-${index}`);
-      const checkbox = el.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-         checkbox.checked = !checkbox.checked;
-         el.classList.toggle('checked', checkbox.checked);
-      }
-   };
-
-   const submitSelection = () => {
-      const checkedInputs = document.querySelectorAll(".menu-item input[type='checkbox']:checked");
-      const selectionsArray = [];
-      checkedInputs.forEach((checkbox) => {
-         const container = checkbox.closest('.menu-item');
-         const numberInput = container.querySelector("input[type='number']");
-         const count = parseInt(numberInput.value || '1');
-         for (let i = 0; i < count; i++) {
-            selectionsArray.push(checkbox.value);
-         }
-      });
-      set(ref(db, 'selections/' + userName), selectionsArray);
    };
 
    const generateSummary = async () => {
@@ -121,24 +104,61 @@ const App = () => {
    }
 
    const renderMenuList = (items, type) =>
-      items.map((item, index) => (
-         <div
-            className="menu-item"
-            id={`${type}-${index}`}
-            key={index}
-            onClick={(e) => {
-               if (e.target.tagName !== 'INPUT') toggleAmount(index, type);
-            }}
-         >
-            <label>
-               <span>{item}</span>
-            </label>
-            <div className="checkbox-container">
-               <input type="checkbox" value={item} onChange={() => {}} />
-               <input type="number" min="1" defaultValue="1" />
+      items.map((item, index) => {
+         const userItems = Array.isArray(selections[userName]) ? selections[userName] : [];
+         const amount = userItems.filter((i) => i === item).length;
+         const isChecked = amount > 0;
+
+         return (
+            <div className={`menu-item ${isChecked ? 'checked' : ''}`} key={index}>
+               <label>
+                  <span>{item}</span>
+               </label>
+               <div className="checkbox-container">
+                  <input
+                     type="checkbox"
+                     value={item}
+                     checked={isChecked}
+                     onChange={(e) => {
+                        const updated = [...userItems];
+                        if (e.target.checked) {
+                           updated.push(item);
+                        } else {
+                           while (updated.includes(item)) {
+                              updated.splice(updated.indexOf(item), 1);
+                           }
+                        }
+                        const newSelections = {
+                           ...selections,
+                           [userName]: updated,
+                        };
+                        setSelections(newSelections);
+                        set(ref(db, 'selections/' + userName), updated);
+                     }}
+                  />
+                  {isChecked && (
+                     <input
+                        type="number"
+                        min="1"
+                        value={amount}
+                        onChange={(e) => {
+                           const newAmount = Math.max(1, parseInt(e.target.value || '1'));
+                           const updated = [...userItems.filter((i) => i !== item)];
+                           for (let i = 0; i < newAmount; i++) updated.push(item);
+                           const newSelections = {
+                              ...selections,
+                              [userName]: updated,
+                           };
+                           setSelections(newSelections);
+                           set(ref(db, 'selections/' + userName), updated);
+                        }}
+                        style={{ marginLeft: '6px' }}
+                     />
+                  )}
+               </div>
             </div>
-         </div>
-      ));
+         );
+      });
 
    return (
       <div className="container">
@@ -148,7 +168,6 @@ const App = () => {
             {renderMenuList(menuMain, 'main')}
             <h4>Ara Yemekler</h4>
             {renderMenuList(menuSide, 'side')}
-            <button onClick={submitSelection}>Seçimi Kaydet</button>
          </div>
 
          <div className="box" id="allSelectionsBox">
