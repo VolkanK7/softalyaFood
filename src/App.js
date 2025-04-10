@@ -66,11 +66,13 @@ const App = () => {
       const snapshot = await get(ref(db, 'selections'));
       const data = snapshot.val() || {};
       const count = {};
-      Object.values(data)
-         .flat()
-         .forEach((item) => {
-            count[item] = (count[item] || 0) + 1;
+
+      Object.values(data).forEach((userSelections) => {
+         Object.entries(userSelections).forEach(([item, quantity]) => {
+            count[item] = (count[item] || 0) + quantity;
          });
+      });
+
       let output = '';
       for (const item in count) {
          output += `${item} x${count[item]}\n`;
@@ -105,52 +107,49 @@ const App = () => {
 
    const renderMenuList = (items, type) =>
       items.map((item, index) => {
-         const userItems = Array.isArray(selections[userName]) ? selections[userName] : [];
-         const amount = userItems.filter((i) => i === item).length;
-         const isChecked = amount > 0;
+         const userSelection = selections[userName] || {};
+         const quantity = userSelection[item] || 0;
+
+         const handleToggle = () => {
+            const updated = { ...userSelection };
+            if (quantity > 0) {
+               delete updated[item];
+            } else {
+               updated[item] = 1;
+            }
+            setSelections((prev) => ({
+               ...prev,
+               [userName]: updated,
+            }));
+            set(ref(db, `selections/${userName}`), updated);
+         };
 
          return (
-            <div className={`menu-item ${isChecked ? 'checked' : ''}`} key={index}>
+            <div className={`menu-item ${quantity > 0 ? 'checked' : ''}`} key={index} onClick={handleToggle} style={{ cursor: 'pointer' }}>
                <label>
                   <span>{item}</span>
                </label>
-               <div className="checkbox-container">
-                  <input
-                     type="checkbox"
-                     value={item}
-                     checked={isChecked}
-                     onChange={(e) => {
-                        const updated = [...userItems];
-                        if (e.target.checked) {
-                           updated.push(item);
-                        } else {
-                           while (updated.includes(item)) {
-                              updated.splice(updated.indexOf(item), 1);
-                           }
-                        }
-                        const newSelections = {
-                           ...selections,
-                           [userName]: updated,
-                        };
-                        setSelections(newSelections);
-                        set(ref(db, 'selections/' + userName), updated);
-                     }}
-                  />
-                  {isChecked && (
+               <div
+                  className="checkbox-container"
+                  onClick={(e) => e.stopPropagation()} // checkbox içi tıklamayı engelle
+               >
+                  <input type="checkbox" checked={quantity > 0} onChange={handleToggle} />
+                  {quantity > 0 && (
                      <input
                         type="number"
                         min="1"
-                        value={amount}
+                        value={quantity}
                         onChange={(e) => {
-                           const newAmount = Math.max(1, parseInt(e.target.value || '1'));
-                           const updated = [...userItems.filter((i) => i !== item)];
-                           for (let i = 0; i < newAmount; i++) updated.push(item);
-                           const newSelections = {
-                              ...selections,
-                              [userName]: updated,
+                           const newQuantity = Math.max(1, parseInt(e.target.value || '1'));
+                           const updated = {
+                              ...userSelection,
+                              [item]: newQuantity,
                            };
-                           setSelections(newSelections);
-                           set(ref(db, 'selections/' + userName), updated);
+                           setSelections((prev) => ({
+                              ...prev,
+                              [userName]: updated,
+                           }));
+                           set(ref(db, `selections/${userName}`), updated);
                         }}
                         style={{ marginLeft: '6px' }}
                      />
@@ -174,7 +173,10 @@ const App = () => {
             <h3>👥 Seçimler</h3>
             {Object.entries(selections).map(([name, items], i) => (
                <p key={i}>
-                  <strong>{name}:</strong> {items.join(', ')}
+                  <strong>{name}:</strong>{' '}
+                  {Object.entries(items)
+                     .map(([itemName, count]) => `${itemName} x${count}`)
+                     .join(', ')}
                </p>
             ))}
          </div>
@@ -190,7 +192,13 @@ const App = () => {
             <button onClick={() => setShowMenuInput(!showMenuInput)}>📋 Menü Ekle / Güncelle</button>
             {showMenuInput && (
                <div>
+                  <label>
+                     <strong>Ana Yemekler</strong>
+                  </label>
                   <textarea rows="4" placeholder="Her satıra bir ana yemek girin..." value={menuMainInput} onChange={(e) => setMenuMainInput(e.target.value)} />
+                  <label>
+                     <strong>Ara Yemekler</strong>
+                  </label>
                   <textarea rows="4" placeholder="Her satıra bir ara yemek girin..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
                   <button onClick={updateMenu}>Menüyü Güncelle</button>
                </div>
