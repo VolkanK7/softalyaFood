@@ -18,6 +18,7 @@ const db = getDatabase(app);
 
 const App = () => {
    const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
+   const [tempUserName, setTempUserName] = useState('');
    const [menuMainInput, setMenuMainInput] = useState('');
    const [menuSideInput, setMenuSideInput] = useState('');
    const [menuMain, setMenuMain] = useState([]);
@@ -50,9 +51,9 @@ const App = () => {
    };
 
    const saveName = () => {
-      if (userName.trim()) {
-         localStorage.setItem('userName', userName.trim());
-         setUserName(userName.trim());
+      if (tempUserName.trim()) {
+         localStorage.setItem('userName', tempUserName.trim());
+         setUserName(tempUserName.trim());
       }
    };
 
@@ -99,7 +100,7 @@ const App = () => {
       return (
          <div className="container box">
             <h3>👤 Adınızı Girin</h3>
-            <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Adınız" />
+            <input value={tempUserName} onChange={(e) => setTempUserName(e.target.value)} placeholder="Adınız" />
             <button onClick={saveName}>Kaydet</button>
          </div>
       );
