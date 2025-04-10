@@ -153,14 +153,6 @@
       <button onclick="saveName()">Kaydet</button>
     </div>
 
-    <div id="menuControl" class="box" style="display:none">
-      <button onclick="toggleMenuInput()">📋 Menü Ekle / Güncelle</button>
-      <div id="menuInputSection" style="display:none">
-        <textarea id="menuInput" rows="5" placeholder="Her satıra bir yemek girin..."></textarea>
-        <button onclick="updateMenu()">Menüyü Güncelle</button>
-      </div>
-    </div>
-
     <div class="box" id="menuBox" style="display:none">
       <h3>✅ Menü ve Seçim</h3>
       <div id="menuList"></div>
@@ -177,11 +169,19 @@
       <pre id="summaryText"></pre>
       <button onclick="generateSummary()">Toplamı Hesapla</button>
       <button onclick="copySummary()">Kopyala</button>
-      <button onclick="changeName()">İsmi Güncelle</button>
+    </div>
+
+    <div id="menuControl" class="box" style="display:none">
+      <button onclick="toggleMenuInput()">📋 Menü Ekle / Güncelle</button>
+      <div id="menuInputSection" style="display:none">
+        <textarea id="menuInput" rows="5" placeholder="Her satıra bir yemek girin..."></textarea>
+        <button onclick="updateMenu()">Menüyü Güncelle</button>
+      </div>
     </div>
 
     <div class="box" style="display:none" id="clearBox">
-      <h3>🧹 Seçim Temizleme</h3>
+      <h3>Ayarlar</h3>
+      <button onclick="changeName()">İsmi Güncelle</button>
       <button class="danger" onclick="clearUserSelection()">🧍 Sadece Benim Seçimlerimi Temizle</button>
       <button class="danger" onclick="clearAllSelections()">🚨 Tüm Seçimleri Temizle</button>
     </div>
