@@ -138,10 +138,3 @@ h2, h3 {
     margin-right: 0;
   }
 }
-
-@media (max-width: 600px) {
-  .menu-item {
-    flex-direction: row;
-    align-items: center;
-  }
-}
