@@ -2,63 +2,204 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Yemek Seçim Sistemi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; }
-    textarea, input, button { margin: 10px 0; width: 100%; padding: 10px; }
-    .menu-item { margin: 5px 0; }
-    .selected { font-weight: bold; }
-    .box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #ffffff;
+      --accent: #4caf50;
+      --input-bg: #2c2c2c;
+      --danger: #d32f2f;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .box {
+      background-color: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    input, textarea, button, select {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      background-color: var(--input-bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #43a047;
+    }
+
+    .danger {
+      background-color: var(--danger);
+    }
+
+    .danger:hover {
+      background-color: #b71c1c;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    .menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #2a2a2a;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+  cursor: pointer;
+  width: 100% !important; /* Div'in genişliğini kapsar */
+  box-sizing: border-box; /* Padding ve margin'lerin genişliği etkilememesi için */
+}
+
+.menu-item label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%; /* Etiketin tam genişliği kapsamasını sağla */
+}
+
+.menu-item input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+.menu-item input[type="number"] {
+  width: 60px;
+  padding: 0.3rem;
+  border-radius: 6px;
+  border: none;
+  background-color: #3a3a3a;
+  color: #ffffff;
+  display: none;
+}
+
+.menu-item.checked input[type="number"] {
+  display: inline-block;
+}
+
+.menu-item .checkbox-container {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: auto; /* Genişliği ayarlıyoruz */
+}
+
+    @media (min-width: 600px) {
+      .menu-item-container {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .menu-item {
+        width: 48%;
+        margin-right: 2%;
+      }
+
+      .menu-item:nth-child(2n) {
+        margin-right: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .menu-item {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
   </style>
 </head>
 <body>
-  <h2>🍽️ Yemek Seçim Sistemi</h2>
+  <div class="container">
+    <div id="nameSection" class="box">
+      <h3>👤 Adınızı Girin</h3>
+      <input id="userNameInput" placeholder="Adınız" />
+      <button onclick="saveName()">Kaydet</button>
+    </div>
 
-  <div id="nameSection">
-    <label>Adınızı girin:</label>
-    <input id="userNameInput" />
-    <button onclick="saveName()">Kaydet</button>
+    <div id="menuControl" class="box" style="display:none">
+      <button onclick="toggleMenuInput()">📋 Menü Ekle / Güncelle</button>
+      <div id="menuInputSection" style="display:none">
+        <textarea id="menuInput" rows="5" placeholder="Her satıra bir yemek girin..."></textarea>
+        <button onclick="updateMenu()">Menüyü Güncelle</button>
+      </div>
+    </div>
+
+    <div class="box" id="menuBox" style="display:none">
+      <h3>✅ Menü ve Seçim</h3>
+      <div id="menuList"></div>
+      <button onclick="submitSelection()">Seçimi Kaydet</button>
+    </div>
+
+    <div class="box" id="allSelectionsBox" style="display:none">
+      <h3>👥 Seçimler</h3>
+      <div id="allSelections"></div>
+    </div>
+
+    <div class="box" id="summaryBox" style="display:none">
+      <h3>📊 Toplam</h3>
+      <pre id="summaryText"></pre>
+      <button onclick="generateSummary()">Toplamı Hesapla</button>
+      <button onclick="copySummary()">Kopyala</button>
+      <button onclick="changeName()">İsmi Güncelle</button>
+    </div>
+
+    <div class="box" style="display:none" id="clearBox">
+      <h3>🧹 Seçim Temizleme</h3>
+      <button class="danger" onclick="clearUserSelection()">🧍 Sadece Benim Seçimlerimi Temizle</button>
+      <button class="danger" onclick="clearAllSelections()">🚨 Tüm Seçimleri Temizle</button>
+    </div>
   </div>
 
-  <div class="box">
-    <h3>📋 Menü Girişi</h3>
-    <textarea id="menuInput" rows="5"></textarea>
-    <button onclick="updateMenu()">Menüyü Güncelle</button>
-  </div>
-
-  <div class="box">
-    <h3>✅ Menü ve Seçim</h3>
-    <div id="menuList"></div>
-    <button onclick="submitSelection()">Seçimi Kaydet</button>
-  </div>
-
-  <div class="box">
-    <h3>👥 Seçimler</h3>
-    <div id="allSelections"></div>
-  </div>
-
-  <div class="box">
-    <h3>📊 Toplam</h3>
-    <pre id="summaryText"></pre>
-    <button onclick="generateSummary()">Toplamı Hesapla</button>
-    <button onclick="copySummary()">Kopyala</button>
-  </div>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
-    // 🔧 BURAYI KENDİ firebaseConfig'inle değiştir
     const firebaseConfig = {
-  apiKey: "AIzaSyCe6fh3eFcMlJoK6qoMHTzgbyHRn1N59Lw",
-  authDomain: "softalyafood.firebaseapp.com",
-  databaseURL: "https://softalyafood-default-rtdb.firebaseio.com",
-  projectId: "softalyafood",
-  storageBucket: "softalyafood.firebasestorage.app",
-  messagingSenderId: "758318924440",
-  appId: "1:758318924440:web:0a3cb2824d487e3a5e46ed",
-  measurementId: "G-VPCC49KLMK"
-};
+      apiKey: "AIzaSyCe6fh3eFcMlJoK6qoMHTzgbyHRn1N59Lw",
+      authDomain: "softalyafood.firebaseapp.com",
+      databaseURL: "https://softalyafood-default-rtdb.firebaseio.com",
+      projectId: "softalyafood",
+      storageBucket: "softalyafood.firebasestorage.app",
+      messagingSenderId: "758318924440",
+      appId: "1:758318924440:web:0a3cb2824d487e3a5e46ed",
+      measurementId: "G-VPCC49KLMK"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -66,19 +207,37 @@
     let userName = localStorage.getItem("userName") || "";
 
     function saveName() {
-      userName = document.getElementById("userNameInput").value.trim();
-      if (userName) {
+      const nameInput = document.getElementById("userNameInput").value.trim();
+      if (nameInput) {
+        userName = nameInput;
         localStorage.setItem("userName", userName);
-        document.getElementById("nameSection").style.display = "none";
-        loadMenu();
-        loadSelections();
+        showApp();
       }
     }
 
-    if (userName) {
+    function changeName() {
+      localStorage.removeItem("userName");
+      location.reload();
+    }
+
+    function showApp() {
       document.getElementById("nameSection").style.display = "none";
+      document.getElementById("menuControl").style.display = "block";
+      document.getElementById("menuBox").style.display = "block";
+      document.getElementById("allSelectionsBox").style.display = "block";
+      document.getElementById("summaryBox").style.display = "block";
+      document.getElementById("clearBox").style.display = "block";
       loadMenu();
       loadSelections();
+    }
+
+    if (userName) {
+      showApp();
+    }
+
+    function toggleMenuInput() {
+      const inputSection = document.getElementById("menuInputSection");
+      inputSection.style.display = inputSection.style.display === "none" ? "block" : "none";
     }
 
     function updateMenu() {
@@ -87,23 +246,57 @@
     }
 
     function loadMenu() {
-      db.ref("menu").on("value", (snapshot) => {
-        const items = snapshot.val() || [];
-        const menuDiv = document.getElementById("menuList");
-        menuDiv.innerHTML = "";
-        items.forEach(item => {
-          const label = document.createElement("label");
-          label.classList.add("menu-item");
-          label.innerHTML = `<input type="checkbox" value="${item}"> ${item}`;
-          menuDiv.appendChild(label);
-        });
+  db.ref("menu").on("value", (snapshot) => {
+    const items = snapshot.val() || [];
+    const menuDiv = document.getElementById("menuList");
+    menuDiv.innerHTML = "";
+    items.forEach(item => {
+      const container = document.createElement("div");
+      container.className = "menu-item";
+      container.innerHTML = `
+        <label>
+          <span>${item}</span>
+        </label>
+        <div class="checkbox-container">
+          <input type="checkbox" value="${item}" onchange="toggleAmount(this)" />
+          <input type="number" min="1" value="1" />
+        </div>
+      `;
+      // Menü item'ine tıklanabilirlik ekleyin
+      container.addEventListener('click', () => {
+        const checkbox = container.querySelector("input[type='checkbox']");
+        checkbox.checked = !checkbox.checked; // Tıklandığında checkbox'ı kontrol et
+        toggleAmount(checkbox); // Seçim miktarını göster
       });
-    }
+      menuDiv.appendChild(container);
+    });
+  });
+}
+
+function toggleAmount(checkbox) {
+  const container = checkbox.closest('.menu-item');
+  const numberInput = container.querySelector('input[type="number"]');
+  if (checkbox.checked) {
+    container.classList.add('checked');
+  } else {
+    container.classList.remove('checked');
+  }
+}
 
     function submitSelection() {
-      const checkboxes = document.querySelectorAll("#menuList input:checked");
-      const selected = Array.from(checkboxes).map(cb => cb.value);
-      db.ref("selections/" + userName).set(selected);
+      const items = document.querySelectorAll(".menu-item");
+      const selections = [];
+      items.forEach(item => {
+        const checkbox = item.querySelector("input[type='checkbox']");
+        const number = item.querySelector("input[type='number']");
+        if (checkbox.checked) {
+          const count = parseInt(number.value || "1");
+          for (let i = 0; i < count; i++) {
+            selections.push(checkbox.value);
+          }
+        }
+      });
+      db.ref("selections/" + userName).set(selections);
     }
 
     function loadSelections() {
@@ -140,6 +333,16 @@
     function copySummary() {
       const text = document.getElementById("summaryText").textContent;
       navigator.clipboard.writeText(text).then(() => alert("Kopyalandı!"));
+    }
+
+    function clearUserSelection() {
+      db.ref("selections/" + userName).remove();
+    }
+
+    function clearAllSelections() {
+      if (confirm("Tüm kullanıcıların seçimleri silinecek. Emin misiniz?")) {
+        db.ref("selections").remove();
+      }
     }
   </script>
 </body>
