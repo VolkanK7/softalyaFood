@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yemek Seçim Sistemi</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; }
+    textarea, input, button { margin: 10px 0; width: 100%; padding: 10px; }
+    .menu-item { margin: 5px 0; }
+    .selected { font-weight: bold; }
+    .box { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>🍽️ Yemek Seçim Sistemi</h2>
+
+  <div id="nameSection">
+    <label>Adınızı girin:</label>
+    <input id="userNameInput" />
+    <button onclick="saveName()">Kaydet</button>
+  </div>
+
+  <div class="box">
+    <h3>📋 Menü Girişi</h3>
+    <textarea id="menuInput" rows="5"></textarea>
+    <button onclick="updateMenu()">Menüyü Güncelle</button>
+  </div>
+
+  <div class="box">
+    <h3>✅ Menü ve Seçim</h3>
+    <div id="menuList"></div>
+    <button onclick="submitSelection()">Seçimi Kaydet</button>
+  </div>
+
+  <div class="box">
+    <h3>👥 Seçimler</h3>
+    <div id="allSelections"></div>
+  </div>
+
+  <div class="box">
+    <h3>📊 Toplam</h3>
+    <pre id="summaryText"></pre>
+    <button onclick="generateSummary()">Toplamı Hesapla</button>
+    <button onclick="copySummary()">Kopyala</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    // 🔧 BURAYI KENDİ firebaseConfig'inle değiştir
+    const firebaseConfig = {
+  apiKey: "AIzaSyCe6fh3eFcMlJoK6qoMHTzgbyHRn1N59Lw",
+  authDomain: "softalyafood.firebaseapp.com",
+  databaseURL: "https://softalyafood-default-rtdb.firebaseio.com",
+  projectId: "softalyafood",
+  storageBucket: "softalyafood.firebasestorage.app",
+  messagingSenderId: "758318924440",
+  appId: "1:758318924440:web:0a3cb2824d487e3a5e46ed",
+  measurementId: "G-VPCC49KLMK"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let userName = localStorage.getItem("userName") || "";
+
+    function saveName() {
+      userName = document.getElementById("userNameInput").value.trim();
+      if (userName) {
+        localStorage.setItem("userName", userName);
+        document.getElementById("nameSection").style.display = "none";
+        loadMenu();
+        loadSelections();
+      }
+    }
+
+    if (userName) {
+      document.getElementById("nameSection").style.display = "none";
+      loadMenu();
+      loadSelections();
+    }
+
+    function updateMenu() {
+      const lines = document.getElementById("menuInput").value.trim().split("\n");
+      db.ref("menu").set(lines);
+    }
+
+    function loadMenu() {
+      db.ref("menu").on("value", (snapshot) => {
+        const items = snapshot.val() || [];
+        const menuDiv = document.getElementById("menuList");
+        menuDiv.innerHTML = "";
+        items.forEach(item => {
+          const label = document.createElement("label");
+          label.classList.add("menu-item");
+          label.innerHTML = `<input type="checkbox" value="${item}"> ${item}`;
+          menuDiv.appendChild(label);
+        });
+      });
+    }
+
+    function submitSelection() {
+      const checkboxes = document.querySelectorAll("#menuList input:checked");
+      const selected = Array.from(checkboxes).map(cb => cb.value);
+      db.ref("selections/" + userName).set(selected);
+    }
+
+    function loadSelections() {
+      db.ref("selections").on("value", (snapshot) => {
+        const data = snapshot.val() || {};
+        const container = document.getElementById("allSelections");
+        container.innerHTML = "";
+        for (const user in data) {
+          const items = data[user].join(", ");
+          const p = document.createElement("p");
+          p.innerHTML = `<strong>${user}:</strong> ${items}`;
+          container.appendChild(p);
+        }
+      });
+    }
+
+    function generateSummary() {
+      db.ref("selections").once("value").then((snapshot) => {
+        const data = snapshot.val() || {};
+        const count = {};
+        for (const user in data) {
+          data[user].forEach(item => {
+            count[item] = (count[item] || 0) + 1;
+          });
+        }
+        let output = "";
+        for (const item in count) {
+          output += `${item} x${count[item]}\n`;
+        }
+        document.getElementById("summaryText").textContent = output.trim();
+      });
+    }
+
+    function copySummary() {
+      const text = document.getElementById("summaryText").textContent;
+      navigator.clipboard.writeText(text).then(() => alert("Kopyalandı!"));
+    }
+  </script>
+</body>
+</html>
