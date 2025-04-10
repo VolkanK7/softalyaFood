@@ -16,77 +16,83 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-function App() {
+const App = () => {
+   const db = getDatabase();
    const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
-   const [nameInput, setNameInput] = useState('');
-   const [menu, setMenu] = useState([]);
+   const [menuMainInput, setMenuMainInput] = useState('');
+   const [menuSideInput, setMenuSideInput] = useState('');
+   const [menuMain, setMenuMain] = useState([]);
+   const [menuSide, setMenuSide] = useState([]);
    const [selections, setSelections] = useState({});
-   const [menuInputVisible, setMenuInputVisible] = useState(false);
-   const [menuText, setMenuText] = useState('');
+   const [showMenuInput, setShowMenuInput] = useState(false);
    const [summary, setSummary] = useState('');
-   const [userChoices, setUserChoices] = useState({}); // { "yemek adı": adet }
 
    useEffect(() => {
       if (userName) {
          const menuRef = ref(db, 'menu');
          onValue(menuRef, (snapshot) => {
-            setMenu(snapshot.val() || []);
+            const data = snapshot.val() || {};
+            setMenuMain(data.main || []);
+            setMenuSide(data.side || []);
          });
 
-         const selRef = ref(db, 'selections');
-         onValue(selRef, (snapshot) => {
+         const selectionRef = ref(db, 'selections');
+         onValue(selectionRef, (snapshot) => {
             setSelections(snapshot.val() || {});
          });
       }
    }, [userName]);
 
-   const handleSaveName = () => {
-      if (nameInput.trim()) {
-         localStorage.setItem('userName', nameInput.trim());
-         setUserName(nameInput.trim());
+   const saveName = () => {
+      if (userName.trim()) {
+         localStorage.setItem('userName', userName.trim());
+         setUserName(userName.trim());
       }
    };
 
-   const handleToggleItem = (item) => {
-      const updated = { ...userChoices };
-      if (updated[item]) {
-         delete updated[item];
-      } else {
-         updated[item] = 1;
-      }
-      setUserChoices(updated);
+   const updateMenu = () => {
+      const main = menuMainInput.trim().split('\n').filter(Boolean);
+      const side = menuSideInput.trim().split('\n').filter(Boolean);
+      set(ref(db, 'menu'), { main, side });
    };
 
-   const handleAmountChange = (item, amount) => {
-      const updated = { ...userChoices };
-      updated[item] = parseInt(amount) || 1;
-      setUserChoices(updated);
+   const toggleAmount = (index, type) => {
+      const el = document.getElementById(`${type}-${index}`);
+      const checkbox = el.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+         checkbox.checked = !checkbox.checked;
+         el.classList.toggle('checked', checkbox.checked);
+      }
    };
 
    const submitSelection = () => {
-      const finalList = [];
-      for (const item in userChoices) {
-         const count = userChoices[item];
+      const checkedInputs = document.querySelectorAll(".menu-item input[type='checkbox']:checked");
+      const selectionsArray = [];
+      checkedInputs.forEach((checkbox) => {
+         const container = checkbox.closest('.menu-item');
+         const numberInput = container.querySelector("input[type='number']");
+         const count = parseInt(numberInput.value || '1');
          for (let i = 0; i < count; i++) {
-            finalList.push(item);
+            selectionsArray.push(checkbox.value);
          }
-      }
-      set(ref(db, `selections/${userName}`), finalList);
+      });
+      set(ref(db, 'selections/' + userName), selectionsArray);
    };
 
    const generateSummary = async () => {
-      const snap = await get(ref(db, 'selections'));
-      const data = snap.val() || {};
+      const snapshot = await get(ref(db, 'selections'));
+      const data = snapshot.val() || {};
       const count = {};
-      for (const user in data) {
-         data[user].forEach((item) => {
+      Object.values(data)
+         .flat()
+         .forEach((item) => {
             count[item] = (count[item] || 0) + 1;
          });
+      let output = '';
+      for (const item in count) {
+         output += `${item} x${count[item]}\n`;
       }
-      const lines = Object.entries(count)
-         .map(([key, val]) => `${key} x${val}`)
-         .join('\n');
-      setSummary(lines);
+      setSummary(output.trim());
    };
 
    const copySummary = () => {
@@ -94,100 +100,94 @@ function App() {
       alert('Kopyalandı!');
    };
 
-   const updateMenu = () => {
-      const lines = menuText.trim().split('\n').filter(Boolean);
-      set(ref(db, 'menu'), lines);
-      setMenuText('');
-   };
-
    const clearUserSelection = () => {
-      remove(ref(db, `selections/${userName}`));
+      remove(ref(db, 'selections/' + userName));
    };
 
    const clearAllSelections = () => {
-      if (window.confirm('Tüm seçimleri silmek istediğinize emin misiniz?')) {
+      if (window.confirm('Tüm seçimler silinecek. Emin misiniz?')) {
          remove(ref(db, 'selections'));
       }
    };
 
-   const changeName = () => {
-      localStorage.removeItem('userName');
-      setUserName('');
-      setUserChoices({});
-   };
-
    if (!userName) {
       return (
-         <div className="container">
-            <div className="box">
-               <h3>👤 Adınızı Girin</h3>
-               <input value={nameInput} onChange={(e) => setNameInput(e.target.value)} placeholder="Adınız" />
-               <button onClick={handleSaveName}>Kaydet</button>
-            </div>
+         <div className="container box">
+            <h3>👤 Adınızı Girin</h3>
+            <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Adınız" />
+            <button onClick={saveName}>Kaydet</button>
          </div>
       );
    }
 
+   const renderMenuList = (items, type) =>
+      items.map((item, index) => (
+         <div
+            className="menu-item"
+            id={`${type}-${index}`}
+            key={index}
+            onClick={(e) => {
+               if (e.target.tagName !== 'INPUT') toggleAmount(index, type);
+            }}
+         >
+            <label>
+               <span>{item}</span>
+            </label>
+            <div className="checkbox-container">
+               <input type="checkbox" value={item} onChange={() => {}} />
+               <input type="number" min="1" defaultValue="1" />
+            </div>
+         </div>
+      ));
+
    return (
       <div className="container">
-         <div className="box">
+         <div className="box" id="menuBox">
             <h3>✅ Menü ve Seçim</h3>
-            <div className="menu-item-container">
-               {menu.map((item, i) => {
-                  const selected = userChoices[item] !== undefined;
-                  return (
-                     <div
-                        key={i}
-                        className={`menu-item ${selected ? 'checked' : ''}`}
-                        onClick={(e) => {
-                           if (e.target.tagName !== 'INPUT') handleToggleItem(item);
-                        }}
-                     >
-                        <label>
-                           <span>{item}</span>
-                        </label>
-                        <div className="checkbox-container">
-                           <input type="checkbox" checked={selected} onChange={() => handleToggleItem(item)} />
-                           {selected && <input type="number" min="1" value={userChoices[item]} onChange={(e) => handleAmountChange(item, e.target.value)} />}
-                        </div>
-                     </div>
-                  );
-               })}
-            </div>
+            <h4>Ana Yemekler</h4>
+            {renderMenuList(menuMain, 'main')}
+            <h4>Ara Yemekler</h4>
+            {renderMenuList(menuSide, 'side')}
             <button onClick={submitSelection}>Seçimi Kaydet</button>
          </div>
 
-         <div className="box">
+         <div className="box" id="allSelectionsBox">
             <h3>👥 Seçimler</h3>
-            <div>
-               {Object.entries(selections).map(([user, list]) => (
-                  <p key={user}>
-                     <strong>{user}:</strong> {list.join(', ')}
-                  </p>
-               ))}
-            </div>
+            {Object.entries(selections).map(([name, items], i) => (
+               <p key={i}>
+                  <strong>{name}:</strong> {items.join(', ')}
+               </p>
+            ))}
          </div>
 
-         <div className="box">
+         <div className="box" id="summaryBox">
             <h3>📊 Toplam</h3>
             <pre>{summary}</pre>
             <button onClick={generateSummary}>Toplamı Hesapla</button>
             <button onClick={copySummary}>Kopyala</button>
          </div>
 
-         <div className="box">
-            <button onClick={() => setMenuInputVisible(!menuInputVisible)}>📋 Menü Ekle / Güncelle</button>
-            {menuInputVisible && (
-               <>
-                  <textarea rows="5" value={menuText} onChange={(e) => setMenuText(e.target.value)} placeholder="Her satıra bir yemek girin..." />
+         <div className="box" id="menuControl">
+            <button onClick={() => setShowMenuInput(!showMenuInput)}>📋 Menü Ekle / Güncelle</button>
+            {showMenuInput && (
+               <div>
+                  <textarea rows="4" placeholder="Her satıra bir ana yemek girin..." value={menuMainInput} onChange={(e) => setMenuMainInput(e.target.value)} />
+                  <textarea rows="4" placeholder="Her satıra bir ara yemek girin..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
                   <button onClick={updateMenu}>Menüyü Güncelle</button>
-               </>
+               </div>
             )}
          </div>
 
-         <div className="box">
+         <div className="box" id="clearBox">
             <h3>Ayarlar</h3>
-            <button onClick={changeName}>İsmi Güncelle</button>
+            <button
+               onClick={() => {
+                  localStorage.removeItem('userName');
+                  window.location.reload();
+               }}
+            >
+               İsmi Güncelle
+            </button>
             <button className="danger" onClick={clearUserSelection}>
                🧍 Sadece Benim Seçimlerimi Temizle
             </button>
@@ -197,6 +197,6 @@ function App() {
          </div>
       </div>
    );
-}
+};
 
 export default App;
