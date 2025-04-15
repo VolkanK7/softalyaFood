@@ -206,27 +206,34 @@ const App = () => {
       return (
          <div style={{ marginBottom: '8px' }}>
             {isEditing ? (
-               <>
-                  <input value={newName} onChange={(e) => setNewName(e.target.value)} />
-                  <button
-                     onClick={() => {
-                        updateMenuItemName(type, item, newName);
-                        setIsEditing(false);
-                     }}
-                  >
-                     Kaydet
-                  </button>
-                  <button onClick={() => setIsEditing(false)}>İptal</button>
-               </>
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <input value={newName} onChange={(e) => setNewName(e.target.value)} style={{ marginRight: '15px' }} />
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                     <button
+                        onClick={() => {
+                           updateMenuItemName(type, item, newName);
+                           setIsEditing(false);
+                        }}
+                        style={{ width: '120px', height: '50px !important', marginRight: '15px' }}
+                     >
+                        Kaydet
+                     </button>
+                     <button onClick={() => setIsEditing(false)} className="danger" style={{ width: '120px', height: '50px !important' }}>
+                        İptal
+                     </button>
+                  </div>
+               </div>
             ) : (
-               <div className="flex">
-                  <span>{item}</span>
-                  <button onClick={() => setIsEditing(true)} style={{ marginLeft: '8px' }}>
-                     ✏️ Güncelle
-                  </button>
-                  <button onClick={() => deleteMenuItem(type, item)} className="danger" style={{ marginLeft: '4px' }}>
-                     🗑 Sil
-                  </button>
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>{item}</div>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                     <button onClick={() => setIsEditing(true)} style={{ width: '120px', height: '50px !important', marginRight: '15px' }}>
+                        Güncelle
+                     </button>
+                     <button onClick={() => deleteMenuItem(type, item)} className="danger" style={{ width: '120px', height: '50px !important' }}>
+                        Sil
+                     </button>
+                  </div>
                </div>
             )}
          </div>
