@@ -26,6 +26,7 @@ const App = () => {
    const [selections, setSelections] = useState({});
    const [showMenuInput, setShowMenuInput] = useState(false);
    const [summary, setSummary] = useState('');
+   const [copied, setCopied] = useState(false);
 
    useEffect(() => {
       if (userName) {
@@ -75,15 +76,25 @@ const App = () => {
       });
 
       let output = '';
-      for (const item in count) {
-         output += `${item} x${count[item]}\n`;
-      }
+      menuMain.forEach((item) => {
+         if (count[item]) {
+            output += `${item} x${count[item]}\n`;
+         }
+      });
+      menuSide.forEach((item) => {
+         if (count[item]) {
+            output += `${item} x${count[item]}\n`;
+         }
+      });
+
       setSummary(output.trim());
    };
 
    const copySummary = () => {
-      navigator.clipboard.writeText(summary);
-      alert('Kopyalandı!');
+      navigator.clipboard.writeText(summary).then(() => {
+         setCopied(true);
+         setTimeout(() => setCopied(false), 1500);
+      });
    };
 
    const clearUserSelection = () => {
@@ -104,7 +115,15 @@ const App = () => {
             itemSummary[item].push(`${name} (${quantity})`);
          });
       });
-      return itemSummary;
+
+      const orderedSummary = {};
+      menuMain.forEach((item) => {
+         if (itemSummary[item]) orderedSummary[item] = itemSummary[item];
+      });
+      menuSide.forEach((item) => {
+         if (itemSummary[item]) orderedSummary[item] = itemSummary[item];
+      });
+      return orderedSummary;
    };
 
    if (!userName) {
@@ -195,7 +214,7 @@ const App = () => {
                <p key={i}>
                   <strong>{name}:</strong>{' '}
                   {Object.entries(items)
-                     .map(([itemName, count]) => `${itemName} x${count}`)
+                     .map(([itemName, count]) => `${itemName} (${count})`)
                      .join(', ')}
                </p>
             ))}
@@ -213,7 +232,28 @@ const App = () => {
             <h3>📊 Toplam</h3>
             <pre>{summary}</pre>
             <button onClick={generateSummary}>Toplamı Hesapla</button>
-            <button onClick={copySummary}>Kopyala</button>
+            <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+               <button onClick={copySummary}>Kopyala</button>
+               {copied && (
+                  <div
+                     style={{
+                        position: 'absolute',
+                        top: '0x',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: '#333',
+                        color: '#fff',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                     }}
+                  >
+                     ✅ Kopyalandı!
+                  </div>
+               )}
+            </div>
          </div>
 
          <div className="box" id="menuControl">
