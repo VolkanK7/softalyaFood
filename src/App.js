@@ -128,7 +128,15 @@ const App = () => {
          return (
             <div className={`menu-item ${quantity > 0 ? 'checked' : ''}`} key={index} onClick={handleToggle} style={{ cursor: 'pointer' }}>
                <label>
-                  <span>{item}</span>
+                  <span
+                     onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(item)}`, '_blank');
+                     }}
+                     style={{ textDecoration: 'underline', cursor: 'pointer', marginRight: '8px' }}
+                  >
+                     {item}
+                  </span>
                </label>
                <div
                   className="checkbox-container"
