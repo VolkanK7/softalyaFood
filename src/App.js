@@ -58,10 +58,73 @@ const App = () => {
       }
    };
 
-   const updateMenu = () => {
-      const main = menuMainInput.trim().split('\n').filter(Boolean);
-      const side = menuSideInput.trim().split('\n').filter(Boolean);
-      set(ref(db, 'menu'), { main, side });
+   const updateMenu = async () => {
+      const snapshot = await get(ref(db, 'menu'));
+      const currentMenu = snapshot.val() || { main: [], side: [] };
+
+      const newMainItems = menuMainInput.trim().split('\n').filter(Boolean);
+      const newSideItems = menuSideInput.trim().split('\n').filter(Boolean);
+
+      const updatedMain = Array.from(new Set([...currentMenu.main, ...newMainItems]));
+      const updatedSide = Array.from(new Set([...currentMenu.side, ...newSideItems]));
+
+      await set(ref(db, 'menu'), {
+         main: updatedMain,
+         side: updatedSide,
+      });
+
+      setMenuMainInput('');
+      setMenuSideInput('');
+      alert('Yeni yemekler eklendi.');
+   };
+
+   const deleteMenuItem = async (type, item) => {
+      const snapshot = await get(ref(db, 'menu'));
+      const currentMenu = snapshot.val() || { main: [], side: [] };
+
+      const updatedList = (type === 'main' ? currentMenu.main : currentMenu.side).filter((i) => i !== item);
+      await set(ref(db, 'menu'), {
+         ...currentMenu,
+         [type]: updatedList,
+      });
+   };
+
+   const updateMenuItemName = async (type, oldName, newName) => {
+      if (!newName.trim()) return;
+      const snapshot = await get(ref(db, 'menu'));
+      const currentMenu = snapshot.val() || { main: [], side: [] };
+
+      const updatedList = (type === 'main' ? currentMenu.main : currentMenu.side).map((i) => (i === oldName ? newName.trim() : i));
+
+      // Seçimlerde de güncelle
+      const selectionSnap = await get(ref(db, 'selections'));
+      const allSelections = selectionSnap.val() || {};
+      const updatedSelections = {};
+
+      Object.entries(allSelections).forEach(([user, items]) => {
+         const newItems = {};
+         Object.entries(items).forEach(([item, qty]) => {
+            if (item === oldName) {
+               newItems[newName] = qty;
+            } else {
+               newItems[item] = qty;
+            }
+         });
+         updatedSelections[user] = newItems;
+      });
+
+      await set(ref(db, 'menu'), {
+         ...currentMenu,
+         [type]: updatedList,
+      });
+
+      await set(ref(db, 'selections'), updatedSelections);
+   };
+
+   const clearMenu = async () => {
+      if (window.confirm('Tüm menü silinecek. Emin misiniz?')) {
+         await set(ref(db, 'menu'), { main: [], side: [] });
+      }
    };
 
    const generateSummary = async () => {
@@ -135,6 +198,40 @@ const App = () => {
          </div>
       );
    }
+
+   const MenuItemEditor = ({ item, type }) => {
+      const [isEditing, setIsEditing] = useState(false);
+      const [newName, setNewName] = useState(item);
+
+      return (
+         <div style={{ marginBottom: '8px' }}>
+            {isEditing ? (
+               <>
+                  <input value={newName} onChange={(e) => setNewName(e.target.value)} />
+                  <button
+                     onClick={() => {
+                        updateMenuItemName(type, item, newName);
+                        setIsEditing(false);
+                     }}
+                  >
+                     Kaydet
+                  </button>
+                  <button onClick={() => setIsEditing(false)}>İptal</button>
+               </>
+            ) : (
+               <>
+                  <span>{item}</span>
+                  <button onClick={() => setIsEditing(true)} style={{ marginLeft: '8px' }}>
+                     ✏️ Güncelle
+                  </button>
+                  <button onClick={() => deleteMenuItem(type, item)} className="danger" style={{ marginLeft: '4px' }}>
+                     🗑 Sil
+                  </button>
+               </>
+            )}
+         </div>
+      );
+   };
 
    const renderMenuList = (items, type) =>
       items.map((item, index) => {
@@ -257,20 +354,31 @@ const App = () => {
          </div>
 
          <div className="box" id="menuControl">
-            <button onClick={() => setShowMenuInput(!showMenuInput)}>📋 Menü Ekle / Güncelle</button>
-            {showMenuInput && (
-               <div>
-                  <label>
-                     <strong>Ana Yemekler</strong>
-                  </label>
-                  <textarea rows="4" placeholder="Her satıra bir ana yemek girin..." value={menuMainInput} onChange={(e) => setMenuMainInput(e.target.value)} />
-                  <label>
-                     <strong>Ara Yemekler</strong>
-                  </label>
-                  <textarea rows="4" placeholder="Her satıra bir ara yemek girin..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
-                  <button onClick={updateMenu}>Menüyü Güncelle</button>
-               </div>
-            )}
+            <h3>📋 Menü Ekle / Güncelle</h3>
+
+            <label>
+               <strong>Yeni Ana Yemekler</strong>
+            </label>
+            <textarea rows="4" placeholder="Her satıra bir ana yemek..." value={menuMainInput} onChange={(e) => setMenuMainInput(e.target.value)} />
+            <label>
+               <strong>Yeni Ara Yemekler</strong>
+            </label>
+            <textarea rows="4" placeholder="Her satıra bir ara yemek..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
+            <button onClick={updateMenu}>Yeni Yemekleri Ekle</button>
+            <button className="danger" style={{ marginLeft: '8px' }} onClick={clearMenu}>
+               🚨 Tüm Menüyü Temizle
+            </button>
+
+            <hr />
+            <h4>🧾 Mevcut Ana Yemekler</h4>
+            {menuMain.map((item, idx) => (
+               <MenuItemEditor key={`main-${idx}`} item={item} type="main" />
+            ))}
+
+            <h4>🥗 Mevcut Ara Yemekler</h4>
+            {menuSide.map((item, idx) => (
+               <MenuItemEditor key={`side-${idx}`} item={item} type="side" />
+            ))}
          </div>
 
          <div className="box" id="clearBox">
