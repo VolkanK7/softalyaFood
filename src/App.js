@@ -96,6 +96,17 @@ const App = () => {
       }
    };
 
+   const generateItemWiseSummary = () => {
+      const itemSummary = {};
+      Object.entries(selections).forEach(([name, items]) => {
+         Object.entries(items).forEach(([item, quantity]) => {
+            if (!itemSummary[item]) itemSummary[item] = [];
+            itemSummary[item].push(`${name} (${quantity})`);
+         });
+      });
+      return itemSummary;
+   };
+
    if (!userName) {
       return (
          <div className="container box">
@@ -179,13 +190,21 @@ const App = () => {
          </div>
 
          <div className="box" id="allSelectionsBox">
-            <h3>👥 Seçimler</h3>
+            <h3>👥 Kişiye Göre Dağılım</h3>
             {Object.entries(selections).map(([name, items], i) => (
                <p key={i}>
                   <strong>{name}:</strong>{' '}
                   {Object.entries(items)
                      .map(([itemName, count]) => `${itemName} x${count}`)
                      .join(', ')}
+               </p>
+            ))}
+            <hr />
+
+            <h3>🍽 Yemeğe Göre Dağılım</h3>
+            {Object.entries(generateItemWiseSummary()).map(([item, users], i) => (
+               <p key={i}>
+                  <strong>{item}:</strong> {users.join(', ')}
                </p>
             ))}
          </div>
