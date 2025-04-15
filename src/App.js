@@ -24,7 +24,7 @@ const App = () => {
    const [menuMain, setMenuMain] = useState([]);
    const [menuSide, setMenuSide] = useState([]);
    const [selections, setSelections] = useState({});
-   const [showMenuInput, setShowMenuInput] = useState(false);
+   const [toggleUpdateMenu, setToggleUpdateMenu] = useState(false);
    const [summary, setSummary] = useState('');
    const [copied, setCopied] = useState(false);
 
@@ -219,7 +219,7 @@ const App = () => {
                   <button onClick={() => setIsEditing(false)}>İptal</button>
                </>
             ) : (
-               <>
+               <div className="flex">
                   <span>{item}</span>
                   <button onClick={() => setIsEditing(true)} style={{ marginLeft: '8px' }}>
                      ✏️ Güncelle
@@ -227,7 +227,7 @@ const App = () => {
                   <button onClick={() => deleteMenuItem(type, item)} className="danger" style={{ marginLeft: '4px' }}>
                      🗑 Sil
                   </button>
-               </>
+               </div>
             )}
          </div>
       );
@@ -364,21 +364,29 @@ const App = () => {
                <strong>Yeni Ara Yemekler</strong>
             </label>
             <textarea rows="4" placeholder="Her satıra bir ara yemek..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
-            <button onClick={updateMenu}>Yeni Yemekleri Ekle</button>
+            <button style={{ marginLeft: '8px' }} onClick={updateMenu}>
+               Yeni Yemekleri Ekle
+            </button>
             <button className="danger" style={{ marginLeft: '8px' }} onClick={clearMenu}>
                🚨 Tüm Menüyü Temizle
             </button>
 
             <hr />
-            <h4>🧾 Mevcut Ana Yemekler</h4>
-            {menuMain.map((item, idx) => (
-               <MenuItemEditor key={`main-${idx}`} item={item} type="main" />
-            ))}
-
-            <h4>🥗 Mevcut Ara Yemekler</h4>
-            {menuSide.map((item, idx) => (
-               <MenuItemEditor key={`side-${idx}`} item={item} type="side" />
-            ))}
+            <button style={{ marginLeft: '8px' }} onClick={() => setToggleUpdateMenu(!toggleUpdateMenu)}>
+               Menüyü Güncelle
+            </button>
+            {toggleUpdateMenu && (
+               <div>
+                  <h4>🧾 Mevcut Ana Yemekler</h4>
+                  {menuMain.map((item, idx) => (
+                     <MenuItemEditor key={`main-${idx}`} item={item} type="main" />
+                  ))}
+                  <h4>🥗 Mevcut Ara Yemekler</h4>
+                  {menuSide.map((item, idx) => (
+                     <MenuItemEditor key={`side-${idx}`} item={item} type="side" />
+                  ))}
+               </div>
+            )}
          </div>
 
          <div className="box" id="clearBox">
