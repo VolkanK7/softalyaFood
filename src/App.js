@@ -315,8 +315,8 @@ const App = () => {
       }
 
       const message = encodeURIComponent(summary);
-      const phoneNumber = '905534153473';
-      const url = `https://wa.me/${phoneNumber}?text=${message}`;
+      const phoneNumber = '905078204727';
+      const url = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
 
       window.open(url, '_blank');
    };
