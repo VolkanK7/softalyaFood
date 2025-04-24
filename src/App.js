@@ -151,6 +151,7 @@ const App = () => {
       });
 
       setSummary(output.trim());
+      return output.trim();
    };
 
    const copySummary = () => {
@@ -302,6 +303,24 @@ const App = () => {
          );
       });
 
+   const handleWhatsAppClick = async () => {
+      console.log('Butona tıklandı');
+
+      const summary = await generateSummary();
+      console.log('generateSummary() sonucu:', summary);
+
+      if (!summary || summary.trim() === '') {
+         alert('Özet boş, gönderim yapılamıyor.');
+         return;
+      }
+
+      const message = encodeURIComponent(summary);
+      const phoneNumber = '905534153473';
+      const url = `https://wa.me/${phoneNumber}?text=${message}`;
+
+      window.open(url, '_blank');
+   };
+
    return (
       <div className="container">
          <div className="box" id="menuBox">
@@ -336,7 +355,8 @@ const App = () => {
             <h3>📊 Toplam</h3>
             <pre>{summary}</pre>
             <button onClick={generateSummary}>Toplamı Hesapla</button>
-            <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+            <button onClick={handleWhatsAppClick}>WhatsApp ile Gönder</button>
+            {/* <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
                <button onClick={copySummary}>Kopyala</button>
                {copied && (
                   <div
@@ -357,7 +377,7 @@ const App = () => {
                      ✅ Kopyalandı!
                   </div>
                )}
-            </div>
+            </div> */}
          </div>
 
          <div className="box" id="menuControl">
