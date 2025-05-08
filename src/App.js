@@ -321,6 +321,53 @@ const App = () => {
       window.open(url, '_blank');
    };
 
+   const generateSummary2 = async () => {
+      const snapshot = await get(ref(db, 'menu'));
+      const data = snapshot.val();
+
+      if (!data) return '';
+
+      let summary = '📅 Bugünün Menüsü:\n\n';
+
+      // Ana Yemekler
+      if (data.main && data.main.length > 0) {
+         summary += '🍽️ Ana Yemekler:\n';
+         data.main.forEach((item) => {
+            summary += `- ${item}\n`;
+         });
+         summary += '\n';
+      }
+
+      // Ara Yemekler
+      if (data.side && data.side.length > 0) {
+         summary += '🥗 Ara Öğünler:\n';
+         data.side.forEach((item) => {
+            summary += `- ${item}\n`;
+         });
+         summary += '\n';
+      }
+
+      summary += '🔗 Daha fazla bilgi: https://softalya-food.vercel.app';
+
+      return summary.trim();
+   };
+
+   const handleWhatsAppClick2 = async () => {
+      const summary = await generateSummary2();
+
+      if (!summary || summary.trim() === '') {
+         alert('Özet boş, gönderim yapılamıyor.');
+         return;
+      }
+
+      const message = encodeURIComponent(summary);
+      const phoneNumber = '905534153473';
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const url = isMobile ? `https://wa.me/${phoneNumber}?text=${message}` : `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+
+      window.open(url, '_blank');
+   };
+
    return (
       <div className="container">
          <div className="box" id="menuBox">
@@ -356,28 +403,7 @@ const App = () => {
             <pre>{summary}</pre>
             <button onClick={generateSummary}>Toplamı Hesapla</button>
             <button onClick={handleWhatsAppClick}>WhatsApp ile Gönder</button>
-            {/* <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-               <button onClick={copySummary}>Kopyala</button>
-               {copied && (
-                  <div
-                     style={{
-                        position: 'absolute',
-                        top: '0x',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        backgroundColor: '#333',
-                        color: '#fff',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        whiteSpace: 'nowrap',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                     }}
-                  >
-                     ✅ Kopyalandı!
-                  </div>
-               )}
-            </div> */}
+            <button onClick={handleWhatsAppClick2}>WhatsApp ile Paylaş</button>
          </div>
 
          <div className="box" id="menuControl">
