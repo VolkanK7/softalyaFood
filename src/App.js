@@ -40,9 +40,39 @@ const App = () => {
       const menuRef = ref(db, 'menu');
       onValue(menuRef, (snapshot) => {
          const data = snapshot.val() || {};
-         setMenuMain(data.main || []);
-         setMenuSide(data.side || []);
+         const mainItems = data.main || [];
+         const sideItems = data.side || [];
+
+         // Split specific menu items
+         const processedSideItems = splitSpecificMenuItems(sideItems);
+
+         setMenuMain(mainItems);
+         setMenuSide(processedSideItems);
+
+         // Update database if items were split
+         if (processedSideItems.length !== sideItems.length) {
+            set(ref(db, 'menu'), {
+               main: mainItems,
+               side: processedSideItems,
+            });
+         }
       });
+   };
+
+   const splitSpecificMenuItems = (items) => {
+      const result = [];
+      items.forEach((item) => {
+         if (item === 'Şişe Kola-Fanta') {
+            result.push('Şişe Kola');
+            result.push('Fanta');
+         } else if (item === 'Şalgam (Acılı-Acısız)') {
+            result.push('Şalgam (Acılı)');
+            result.push('Şalgam (Acısız)');
+         } else {
+            result.push(item);
+         }
+      });
+      return Array.from(new Set(result)); // Remove any duplicates
    };
 
    const loadSelections = () => {
