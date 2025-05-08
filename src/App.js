@@ -417,20 +417,22 @@ const App = () => {
 
       let summary = '📅 Bugünün Menüsü:\n\n';
 
-      for (const category in data) {
-         if (Array.isArray(data[category]) && data[category].length > 0) {
-            // Emoji ve kategori adı
-            const emoji = category.toLowerCase().includes('ara') ? '🥗' : '🍽️';
-            summary += `${emoji} ${capitalize(category)}:\n`;
+      // Ana Yemekler
+      if (data.main && data.main.length > 0) {
+         summary += '🍽️ Ana Yemekler:\n';
+         data.main.forEach((item) => {
+            summary += `- ${item}\n`;
+         });
+         summary += '\n';
+      }
 
-            data[category].forEach((item) => {
-               if (item && item.name) {
-                  summary += `- ${item.name}\n`;
-               }
-            });
-
-            summary += '\n';
-         }
+      // Ara Yemekler
+      if (data.side && data.side.length > 0) {
+         summary += '🥗 Ara Yemekler:\n';
+         data.side.forEach((item) => {
+            summary += `- ${item}\n`;
+         });
+         summary += '\n';
       }
 
       summary += '🔗 Daha fazla bilgi: https://softalya-food.vercel.app';
