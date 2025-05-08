@@ -27,6 +27,7 @@ const App = () => {
    const [toggleUpdateMenu, setToggleUpdateMenu] = useState(false);
    const [summary, setSummary] = useState('');
    const [copied, setCopied] = useState(false);
+   const [menuCommonInput, setMenuCommonInput] = useState('');
 
    useEffect(() => {
       if (userName) {
@@ -190,6 +191,63 @@ const App = () => {
       return orderedSummary;
    };
 
+   const parseCommonMenu = () => {
+      const lines = menuCommonInput.trim().split('\n');
+      let mainItems = [];
+      let sideItems = [];
+      let isMainSection = false;
+
+      // İlk boş satırı bul
+      const firstEmptyLineIndex = lines.findIndex((line) => line.trim() === '');
+      const lastEmptyLineIndex = lines.findLastIndex((line) => line.trim() === '');
+
+      // İlk boş satıra kadar olan kısım ara yemek (çorba vb.)
+      if (firstEmptyLineIndex !== -1) {
+         sideItems = lines
+            .slice(0, firstEmptyLineIndex)
+            .map((line) => line.trim())
+            .filter(Boolean);
+      }
+
+      // İlk ve son boş satır arası ana yemek
+      if (firstEmptyLineIndex !== -1 && lastEmptyLineIndex !== -1) {
+         mainItems = lines
+            .slice(firstEmptyLineIndex + 1, lastEmptyLineIndex)
+            .map((line) => line.trim())
+            .filter(Boolean);
+      }
+
+      // Son boş satırdan sonraki kısım ara yemek
+      if (lastEmptyLineIndex !== -1) {
+         sideItems = [
+            ...sideItems,
+            ...lines
+               .slice(lastEmptyLineIndex + 1)
+               .map((line) => line.trim())
+               .filter(Boolean),
+         ];
+      }
+
+      // Direkt olarak menüyü güncelle
+      updateMenuWithItems(mainItems, sideItems);
+   };
+
+   const updateMenuWithItems = async (mainItems, sideItems) => {
+      const snapshot = await get(ref(db, 'menu'));
+      const currentMenu = snapshot.val() || { main: [], side: [] };
+
+      const updatedMain = Array.from(new Set([...currentMenu.main, ...mainItems]));
+      const updatedSide = Array.from(new Set([...currentMenu.side, ...sideItems]));
+
+      await set(ref(db, 'menu'), {
+         main: updatedMain,
+         side: updatedSide,
+      });
+
+      setMenuCommonInput('');
+      alert('Yeni yemekler eklendi.');
+   };
+
    if (!userName) {
       return (
          <div className="container box">
@@ -329,28 +387,28 @@ const App = () => {
 
       let summary = '📅 Bugünün Menüsü:\n\n';
 
-      // Ana Yemekler
-      if (data.main && data.main.length > 0) {
-         summary += '🍽️ Ana Yemekler:\n';
-         data.main.forEach((item) => {
-            summary += `- ${item}\n`;
-         });
-         summary += '\n';
-      }
+      for (const category in data) {
+         if (Array.isArray(data[category]) && data[category].length > 0) {
+            // Emoji ve kategori adı
+            const emoji = category.toLowerCase().includes('ara') ? '🥗' : '🍽️';
+            summary += `${emoji} ${capitalize(category)}:\n`;
 
-      // Ara Yemekler
-      if (data.side && data.side.length > 0) {
-         summary += '🥗 Ara Öğünler:\n';
-         data.side.forEach((item) => {
-            summary += `- ${item}\n`;
-         });
-         summary += '\n';
+            data[category].forEach((item) => {
+               if (item && item.name) {
+                  summary += `- ${item.name}\n`;
+               }
+            });
+
+            summary += '\n';
+         }
       }
 
       summary += '🔗 Daha fazla bilgi: https://softalya-food.vercel.app';
 
       return summary.trim();
    };
+
+   const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
    const handleWhatsAppClick2 = async () => {
       const summary = await generateSummary2();
@@ -396,6 +454,7 @@ const App = () => {
                   <strong>{item}:</strong> {users.join(', ')}
                </p>
             ))}
+            <button onClick={handleWhatsAppClick2}>WhatsApp ile Paylaş</button>
          </div>
 
          <div className="box" id="summaryBox">
@@ -403,11 +462,48 @@ const App = () => {
             <pre>{summary}</pre>
             <button onClick={generateSummary}>Toplamı Hesapla</button>
             <button onClick={handleWhatsAppClick}>WhatsApp ile Gönder</button>
-            <button onClick={handleWhatsAppClick2}>WhatsApp ile Paylaş</button>
+            {/* <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+               <button onClick={copySummary}>Kopyala</button>
+               {copied && (
+                  <div
+                     style={{
+                        position: 'absolute',
+                        top: '0x',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: '#333',
+                        color: '#fff',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                     }}
+                  >
+                     ✅ Kopyalandı!
+                  </div>
+               )}
+            </div> */}
          </div>
 
          <div className="box" id="menuControl">
             <h3>📋 Menü Ekle / Güncelle</h3>
+
+            <label>
+               <strong>Ortak Menü Girişi</strong>
+            </label>
+            <textarea
+               rows="15"
+               placeholder="Tüm menüyü giriniz..."
+               value={menuCommonInput}
+               onChange={(e) => setMenuCommonInput(e.target.value)}
+               style={{ width: '97%' }}
+            />
+            <button style={{ marginLeft: '8px' }} onClick={parseCommonMenu}>
+               Menüyü Ekle
+            </button>
+
+            <hr />
 
             <label>
                <strong>Yeni Ana Yemekler</strong>
