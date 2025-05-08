@@ -386,11 +386,23 @@ const App = () => {
             <label>
                <strong>Yeni Ana Yemekler</strong>
             </label>
-            <textarea rows="4" placeholder="Her satıra bir ana yemek..." value={menuMainInput} onChange={(e) => setMenuMainInput(e.target.value)} />
+            <textarea
+               rows="15"
+               placeholder="Her satıra bir ana yemek..."
+               value={menuMainInput}
+               onChange={(e) => setMenuMainInput(e.target.value)}
+               style={{ width: '97%' }}
+            />
             <label>
                <strong>Yeni Ara Yemekler</strong>
             </label>
-            <textarea rows="4" placeholder="Her satıra bir ara yemek..." value={menuSideInput} onChange={(e) => setMenuSideInput(e.target.value)} />
+            <textarea
+               rows="15"
+               placeholder="Her satıra bir ara yemek..."
+               value={menuSideInput}
+               onChange={(e) => setMenuSideInput(e.target.value)}
+               style={{ width: '97%' }}
+            />
             <button style={{ marginLeft: '8px' }} onClick={updateMenu}>
                Yeni Yemekleri Ekle
             </button>
