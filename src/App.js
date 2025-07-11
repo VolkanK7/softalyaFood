@@ -366,25 +366,66 @@ const App = () => {
                   onClick={(e) => e.stopPropagation()} // checkbox içi tıklamayı engelle
                >
                   <input type="checkbox" checked={quantity > 0} onChange={handleToggle} />
+
                   {quantity > 0 && (
-                     <input
-                        type="number"
-                        min="1"
-                        value={quantity}
-                        onChange={(e) => {
-                           const newQuantity = Math.max(1, parseInt(e.target.value || '1'));
-                           const updated = {
-                              ...userSelection,
-                              [item]: newQuantity,
-                           };
-                           setSelections((prev) => ({
-                              ...prev,
-                              [userName]: updated,
-                           }));
-                           set(ref(db, `selections/${userName}`), updated);
-                        }}
-                        style={{ marginLeft: '6px' }}
-                     />
+                     <div style={{ display: 'flex', alignItems: 'center', marginLeft: '6px' }}>
+                        <input
+                           type="number"
+                           min="1"
+                           value={quantity}
+                           onChange={(e) => {
+                              const newQuantity = Math.max(1, parseInt(e.target.value || '1'));
+                              const updated = {
+                                 ...userSelection,
+                                 [item]: newQuantity,
+                              };
+                              setSelections((prev) => ({
+                                 ...prev,
+                                 [userName]: updated,
+                              }));
+                              set(ref(db, `selections/${userName}`), updated);
+                           }}
+                           style={{ width: '60px', padding: '4px' }}
+                        />
+
+                        {/* Mobilde + / - butonları */}
+                        <div className="mobile-quantity-buttons">
+                           <button
+                              style={{ fontSize: '24px' }}
+                              onClick={() => {
+                                 const newQuantity = quantity + 1;
+                                 const updated = {
+                                    ...userSelection,
+                                    [item]: newQuantity,
+                                 };
+                                 setSelections((prev) => ({
+                                    ...prev,
+                                    [userName]: updated,
+                                 }));
+                                 set(ref(db, `selections/${userName}`), updated);
+                              }}
+                           >
+                              +
+                           </button>
+                           <button
+                              style={{ fontSize: '24px' }}
+                              onClick={() => {
+                                 const newQuantity = Math.max(1, quantity - 1);
+                                 const updated = {
+                                    ...userSelection,
+                                    [item]: newQuantity,
+                                 };
+                                 setSelections((prev) => ({
+                                    ...prev,
+                                    [userName]: updated,
+                                 }));
+                                 set(ref(db, `selections/${userName}`), updated);
+                              }}
+                           >
+                              -
+                           </button>
+                        </div>
+                     </div>
                   )}
                </div>
             </div>
