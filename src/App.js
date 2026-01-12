@@ -476,7 +476,7 @@ const App = () => {
          summary += '\n';
       }
 
-      summary += '🔗 Daha fazla bilgi: https://softalya-food.vercel.app';
+      summary += '🔗 Daha fazla bilgi: https://volkank7.github.io/softalyaFood/';
 
       return summary.trim();
    };
