@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/softalyaFood/static/css/main.7fb3e037.css",
-    "main.js": "/softalyaFood/static/js/main.68fae444.js",
+    "main.js": "/softalyaFood/static/js/main.a648d5fb.js",
     "static/js/453.80a112ae.chunk.js": "/softalyaFood/static/js/453.80a112ae.chunk.js",
     "index.html": "/softalyaFood/index.html",
     "main.7fb3e037.css.map": "/softalyaFood/static/css/main.7fb3e037.css.map",
-    "main.68fae444.js.map": "/softalyaFood/static/js/main.68fae444.js.map",
+    "main.a648d5fb.js.map": "/softalyaFood/static/js/main.a648d5fb.js.map",
     "453.80a112ae.chunk.js.map": "/softalyaFood/static/js/453.80a112ae.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.7fb3e037.css",
-    "static/js/main.68fae444.js"
+    "static/js/main.a648d5fb.js"
   ]
 }
